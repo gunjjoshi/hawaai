@@ -69,16 +69,19 @@ def main():
         
         print("Starting main loop...")
         
-        # Initialize click state
-        is_clicked = False
+        # Initialize click states
+        is_left_clicked = False
+        is_right_clicked = False
         click_start_time = None
         click_duration = 0.2  # 0.2 seconds for a click
         click_threshold = 0.1  # 0.1 distance threshold for click
+        right_click_threshold = 0.1  # distance threshold for right-click
 
         # Help text
         help_text = [
             "Gestures:",
-            "- Bring thumb and index finger close to click",
+            "- Bring thumb and index finger close to left click",
+            "- Bring thumb and ring finger close to right click",
             "- Move hand to control cursor",
             "Press ESC to exit"
         ]
@@ -136,18 +139,30 @@ def main():
                         except pyautogui.FailSafeException:
                             print("FailSafe triggered - mouse in corner")
 
-                    # Check for click gesture
+                    # Check for left click gesture
                     thumb_tip = hand_landmarks.landmark[mp_hands.HandLandmark.THUMB_TIP]
                     index_finger_tip = hand_landmarks.landmark[mp_hands.HandLandmark.INDEX_FINGER_TIP]
                     distance = np.linalg.norm([thumb_tip.x - index_finger_tip.x, thumb_tip.y - index_finger_tip.y])
 
-                    if distance < click_threshold and not is_clicked:
-                        print("Click detected")
-                        is_clicked = True
+                    if distance < click_threshold and not is_left_clicked:
+                        print("Left click detected")
+                        is_left_clicked = True
                         click_start_time = time.time()
                         pyautogui.click(button='left')
-                    elif is_clicked and time.time() - click_start_time > click_duration:
-                        is_clicked = False
+                    elif is_left_clicked and time.time() - click_start_time > click_duration:
+                        is_left_clicked = False
+
+                    # Check for right click gesture
+                    ring_tip = hand_landmarks.landmark[mp_hands.HandLandmark.RING_FINGER_TIP]
+                    distance_right_click = np.linalg.norm([thumb_tip.x - ring_tip.x, thumb_tip.y - ring_tip.y])
+
+                    if distance_right_click < right_click_threshold and not is_right_clicked:
+                        print("Right click detected")
+                        is_right_clicked = True
+                        click_start_time = time.time()
+                        pyautogui.click(button='right')
+                    elif is_right_clicked and time.time() - click_start_time > click_duration:
+                        is_right_clicked = False
 
             # Display frame
             cv2.imshow('Hand Gesture Control', frame)
